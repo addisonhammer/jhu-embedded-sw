@@ -1,0 +1,4 @@
+{
+    "sketch": "Project_1\\morse_led.ino",
+    "board": "arduino:avr:uno"
+}
