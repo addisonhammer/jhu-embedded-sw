@@ -9,6 +9,7 @@ enum PrintState
 {
   IDENTIFY,
   PRINT_CHAR,
+  WORD_WAIT,
   ON_WAIT,
   OFF_WAIT,
   COMPLETE
@@ -308,8 +309,6 @@ MorseParts getNextMorseBit(const MorseLetter letter, int currentPart)
   return (MorseParts)((letter.parts >> currentPart++) & 1);
 }
 
-
-
 PrintErrors printStringMorse(const String& toMorse)
 {
   PrintState currentState = PrintState::IDENTIFY;
@@ -330,7 +329,7 @@ PrintErrors printStringMorse(const String& toMorse)
     {
     case PrintState::IDENTIFY:
       // Check if string is done
-      if (currentCharIndex > stringLen)
+      if (currentCharIndex >= stringLen)
       {
         currentState = PrintState::COMPLETE;
         break;
@@ -343,31 +342,24 @@ PrintErrors printStringMorse(const String& toMorse)
       // the next character
       if (currentChar == ' ')
       {
-        needsSpaceWait = true;
-        continue;
+        currentState = WORD_WAIT;
+        break;
       }
 
       // Convert Character to Morse Code
       currentLetter = MORSE_LUT[currentChar];
 
       // Check if non printable character
-      if (currentLetter.num_parts == 0 && currentChar != ' ')
+      if (currentLetter.num_parts == 0)
       {
         currentState = PrintState::COMPLETE;
         error = PrintErrors::ESCAPE_RECEIVED;
-      }
-      // Handle spaces
-      else if (needsSpaceWait)
-      {
-        currentState = PrintState::OFF_WAIT;
-        currentWait = WORD_DELAY_MS;
       }
       else
       {
         // go directly to print characters
         currentState = PrintState::PRINT_CHAR;
       }
-
       break;
 
     case PrintState::PRINT_CHAR:
@@ -400,6 +392,11 @@ PrintErrors printStringMorse(const String& toMorse)
         currentState = PrintState::COMPLETE;
         break;
       }
+      break;
+
+    case PrintState::WORD_WAIT:
+      currentWait = WORD_DELAY_MS;
+      currentState = PrintState::OFF_WAIT;
       break;
 
     case PrintState::ON_WAIT:
@@ -441,37 +438,26 @@ PrintErrors printStringMorse(const String& toMorse)
   return error;
 }
 
-
+void writeString(const String& str)
+{
+  for(int i = 0; i < str.length(); ++i)
+  {
+    Serial.write(str[i]);
+  }
+}
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(38400);
-
- 
+  Serial.begin(9600);
 }
 
 void loop() {
-
-   // TEST CODE
-  String toWrite = "To Morse Code";
-  for(int i = 0; i < toWrite.length(); ++i)
-  {
-    while(Serial.availableForWrite() == 0)
-    {
-      delay(1000);
-    }
-    Serial.write(toWrite[i]);
-  }
-
-  Serial.flush ();
-  // wait for transmit buffer to empty
-  while ((UCSR0A & _BV (TXC0)) == 0) {}
-  // END TEST CODE
-    
-  if(Serial.available() > 0)
-  {
-    String toMorse = Serial.readString();
-    printStringMorse(toMorse);
-  }  
+  writeString("Send String to Convert to Morse Code\n");
+  // Loop until data available
+  while(Serial.available() == 0) { delay(1); }
+  // Read the string to convert
+  String toMorse = Serial.readString();
+  // convert and blink the code
+  printStringMorse(toMorse);
 }
