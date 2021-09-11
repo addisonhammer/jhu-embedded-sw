@@ -306,7 +306,7 @@ MorseParts getNextMorseBit(const MorseLetter letter, int currentPart)
     return MorseParts::ERR;
   }
 
-  return (MorseParts)((letter.parts >> currentPart++) & 1);
+  return (MorseParts)((letter.parts >> currentPart) & 1);
 }
 
 PrintErrors printStringMorse(const String& toMorse)
