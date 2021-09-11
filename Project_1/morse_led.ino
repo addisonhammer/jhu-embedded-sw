@@ -297,8 +297,6 @@ const MorseLetter MORSE_LUT[] =
   { 0, 0b0 }// 255 - 
 };
 
-
-
 MorseParts getNextMorseBit(const MorseLetter letter, int currentPart)
 {
   if (currentPart >= letter.num_parts)
@@ -319,8 +317,7 @@ PrintErrors printStringMorse(const String& toMorse)
   int currentCharIndex = 0;
   char currentChar = 0;
   MorseLetter currentLetter = { 0, 0 };
-  int currentWait = 0;
-  bool needsSpaceWait = false;
+  int currentWait = 0;  
   bool letterComplete = false;
 
   while (currentState != PrintState::COMPLETE)
@@ -342,7 +339,7 @@ PrintErrors printStringMorse(const String& toMorse)
       // the next character
       if (currentChar == ' ')
       {
-        currentState = WORD_WAIT;
+        currentState = PrintState::WORD_WAIT;
         break;
       }
 
@@ -408,11 +405,7 @@ PrintErrors printStringMorse(const String& toMorse)
     case PrintState::OFF_WAIT:
       digitalWrite(LED_BUILTIN, LOW);
       
-      if (needsSpaceWait)
-      {
-        needsSpaceWait = false;
-      }
-      else if (currentPartIndex >= currentLetter.num_parts)
+      if (currentPartIndex >= currentLetter.num_parts)
       {
         currentWait = LETTER_DELAY_MS;
       }
