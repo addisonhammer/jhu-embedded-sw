@@ -329,6 +329,7 @@ PrintErrors printStringMorse(const String& toMorse)
       if (currentCharIndex >= stringLen)
       {
         currentState = PrintState::COMPLETE;
+        error = PrintErrors::NO_ERROR;
         break;
       }
 
@@ -350,7 +351,14 @@ PrintErrors printStringMorse(const String& toMorse)
       if (currentLetter.num_parts == 0)
       {
         currentState = PrintState::COMPLETE;
-        error = PrintErrors::ESCAPE_RECEIVED;
+        if(currentChar == '\n')
+        {
+          error = PrintErrors::NO_ERROR;
+        }
+        else
+        {
+          error = PrintErrors::ESCAPE_RECEIVED;
+        }
       }
       else
       {
@@ -452,5 +460,11 @@ void loop() {
   // Read the string to convert
   String toMorse = Serial.readString();
   // convert and blink the code
-  printStringMorse(toMorse);
+  if(printStringMorse(toMorse) == PrintErrors::ESCAPE_RECEIVED)
+  {
+    writeString("Sentinel Received, Exiting...\n");
+    Serial.flush();
+    // Exit the loop if sentinel is received.
+    exit(0);
+  }
 }
