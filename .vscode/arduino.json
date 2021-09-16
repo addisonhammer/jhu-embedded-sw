@@ -1,6 +1,7 @@
 {
-    "sketch": "Project_1\\morse_led.ino",
+    "sketch": "Project_1/morse_led/morse_led.ino",
     "board": "arduino:avr:uno",
-    "port": "COM6",
-    "output": "./build"
+    "port": "/dev/ttyUSB0",
+    "output": "./build",
+    "programmer": "arduino:avrispmkii"
 }
