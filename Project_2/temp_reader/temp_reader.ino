@@ -1,6 +1,7 @@
-#include <millisDelay.h>
-#include <loopTimer.h>
-#include <DHT.h>
+#include <millisDelay.h> // Helpers for Timer-Based RR Loop
+#include <BufferedOutput.h> // Helper for non-blocking debug output
+#include <loopTimer.h>  // Debug output for loop execution time
+#include <DHT.h>  // Library with DHT Sensor Helpers
 #include <Wire.h>  // Library which contains functions to have I2C Communication
 #define SLAVE_ADDRESS 0x40 // Define the I2C address to Communicate to Uno
 
@@ -16,12 +17,15 @@ const uint32_t ledDelayMS = 100;
 millisDelay ledDelay;
 millisDelay readDelay;
 
+createBufferedOutput(bufferedOut, 80, DROP_UNTIL_EMPTY);
+
 void setup() {
   // Start Serial connection for debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
+  bufferedOut.connect(Serial);  // connect buffered stream to Serial
   // Start I2C Slave Connection, for data transmit interrupt
   Wire.begin(SLAVE_ADDRESS); // this will begin I2C Connection with 0x40 address
-  Wire.onRequest(sendData); // sendData is funtion called when Pi requests data
+  Wire.onRequest(sendDataInterrupt); // sendData is funtion called when Pi requests data
 
   // Initialize DHT11 device.
   dht.begin();
@@ -35,32 +39,32 @@ void setup() {
 }
 
 void loop() {
-  loopTimer.check(Serial);
+  bufferedOut.nextByteOut(); // call at least once per loop to release chars
+  loopTimer.check(bufferedOut);
   // Get temperature event and convert it
   readTemp();
-  resetLED();
 }
 
 void readTemp() {
+  // Read DHT Temp when sensor is ready (1Hz for DHT11)
   if (readDelay.justFinished()) {
     readDelay.repeat();
-    Serial.print("Reading Probe Temp: ");
+    bufferedOut.print("Reading Probe Temp: ");
     float tempF = dht.readTemperature(true);
-    Serial.println(tempF);
+    bufferedOut.println(tempF);
+    // Buffer the temperature as a String for I2C comms
     dtostrf(tempF, 3, 2, tempBuffer);
   }
 }
 
-void resetLED() {
-  if (ledDelay.justFinished()) {
-    ledDelay.repeat();
-    digitalWrite(LEDPIN, LOW);
-  }
-}
-
-void sendData() {
+void sendDataInterrupt() {
+  // Turn on the LED while running, and print execution time
+  unsigned long start = micros();
   digitalWrite(LEDPIN, HIGH);
-  Serial.print("Data Request Received: ");
-  Serial.println(tempBuffer);
+  bufferedOut.print("Data Request Interrupt Received: ");
+  bufferedOut.println(tempBuffer);
   Wire.write(tempBuffer); // return data to PI
+  digitalWrite(LEDPIN, LOW);
+  bufferedOut.print("  Interrupt Duration (uS): ");
+  bufferedOut.println(micros() - start);
 }
