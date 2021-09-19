@@ -13,7 +13,7 @@ DHT dht = DHT(DHTPIN, DHTTYPE);
 char tempBuffer[8];
 
 const uint32_t readDelayMS = 1000;
-const uint32_t ledDelayMS = 100;
+const uint32_t ledDelayMS = 250;
 millisDelay ledDelay;
 millisDelay readDelay;
 
@@ -56,13 +56,14 @@ void readTemp() {
     float tempF = dht.readTemperature(true);
     bufferedOut.println(tempF);
     // Buffer the temperature as a String for I2C comms
+    noInterrupts(); // Disable Inerrupts for shared Data
     dtostrf(tempF, 3, 2, tempBuffer);
+    interrupts();
   }
 }
 
 void resetLED() {
   if (ledDelay.justFinished()) {
-    ledDelay.repeat();
     digitalWrite(LEDPIN, LOW);
   }
 }
@@ -71,6 +72,7 @@ void sendDataInterrupt() {
   // Turn on the LED while running, and print execution time
   unsigned long start = micros();
   digitalWrite(LEDPIN, HIGH);
+  ledDelay.repeat();
   bufferedOut.print("Data Request Interrupt Received: ");
   bufferedOut.println(tempBuffer);
   Wire.write(tempBuffer); // return data to PI
