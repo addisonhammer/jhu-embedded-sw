@@ -56,7 +56,7 @@ void readTemp() {
     float tempF = dht.readTemperature(true);
     bufferedOut.println(tempF);
     // Buffer the temperature as a String for I2C comms
-    noInterrupts(); // Disable Inerrupts for shared Data
+    noInterrupts(); // Disable interrupts for shared Data
     dtostrf(tempF, 3, 2, tempBuffer);
     interrupts();
   }
