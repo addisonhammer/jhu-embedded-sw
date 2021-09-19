@@ -43,6 +43,9 @@ void loop() {
   loopTimer.check(bufferedOut);
   // Get temperature event and convert it
   readTemp();
+  // Turn off LED if there has been an interrupt
+  // This ensures the LED stays lit for a minimum period
+  resetLED();
 }
 
 void readTemp() {
@@ -57,6 +60,13 @@ void readTemp() {
   }
 }
 
+void resetLED() {
+  if (ledDelay.justFinished()) {
+    ledDelay.repeat();
+    digitalWrite(LEDPIN, LOW);
+  }
+}
+
 void sendDataInterrupt() {
   // Turn on the LED while running, and print execution time
   unsigned long start = micros();
@@ -64,7 +74,6 @@ void sendDataInterrupt() {
   bufferedOut.print("Data Request Interrupt Received: ");
   bufferedOut.println(tempBuffer);
   Wire.write(tempBuffer); // return data to PI
-  digitalWrite(LEDPIN, LOW);
   bufferedOut.print("  Interrupt Duration (uS): ");
   bufferedOut.println(micros() - start);
 }
