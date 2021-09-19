@@ -13,7 +13,7 @@ DHT dht = DHT(DHTPIN, DHTTYPE);
 char tempBuffer[8];
 
 const uint32_t readDelayMS = 1000;
-const uint32_t ledDelayMS = 250;
+const uint32_t ledDelayMS = 500;
 millisDelay ledDelay;
 millisDelay readDelay;
 
@@ -33,8 +33,7 @@ void setup() {
   // Use the onboard LED to indicate an interrupt has been received
   pinMode(LEDPIN, OUTPUT);
 
-  // Start Timers
-  ledDelay.start(ledDelayMS);
+  // Start Repeating Sensor Read Timers
   readDelay.start(readDelayMS);
 }
 
@@ -72,7 +71,7 @@ void sendDataInterrupt() {
   // Turn on the LED while running, and print execution time
   unsigned long start = micros();
   digitalWrite(LEDPIN, HIGH);
-  ledDelay.repeat();
+  ledDelay.start(ledDelayMS);
   bufferedOut.print("Data Request Interrupt Received: ");
   bufferedOut.println(tempBuffer);
   Wire.write(tempBuffer); // return data to PI
