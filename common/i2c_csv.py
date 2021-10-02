@@ -15,6 +15,7 @@ def log_i2c_to_csv(read_interval_s: datetime.timedelta,
                     i2c_addr: bytes = 0x40,
                     i2c_offset: bytes = 0x00,
                     i2c_len: int = 8):
+    logging.info('Starting logger...')
     with open(csv_file, 'w') as f:
             csv_writer = csv.DictWriter(f, ('timestamp', data_header))
             start_time = datetime.datetime.utcnow()
@@ -27,5 +28,9 @@ def log_i2c_to_csv(read_interval_s: datetime.timedelta,
                     csv_writer.writerow({'timestamp': timestamp.isoformat(), data_header: data_type(msg)})
                     time.sleep(read_interval_s.total_seconds())
                 except OSError as e:
-                    logging.exception('IO Error on I2C Bus:')
+                    logging.error('IO Error on I2C Bus: %s', e)
                     continue
+                except KeyboardInterrupt:
+                    # This won't handle CTRL+C during IOErrors...
+                    logging.error('Data collection interrupted.')
+                    break
