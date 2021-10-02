@@ -6,7 +6,7 @@
 
 // I2C Interrupt Configuration
 #define SLAVE_ADDRESS 0x40 // Define the I2C address to Communicate
-bool dataInterruptReady = false;
+#define I2C_LEN 8
 
 // Timers for RR Interrupts
 millisDelay escWriteDelay;
@@ -51,7 +51,22 @@ void setupIR() {
 }
 
 void sendDataISR() {
-  dataInterruptReady = true;
+  char rpmStr[I2C_LEN];
+  sprintf(rpmStr, "%i", instantRPM);
+  Serial.print("Data Request Interrupt Received: ");
+  Serial.println(rpmStr);
+  Wire.write(rpmStr); // return data to PI
+}
+
+void handleCommandISR(int len) {
+  if (len <= 1) {
+    return;
+  }
+  Serial.print("Command Interrupt Received: ");
+  long command = Wire.parseInt();
+  Serial.println(command);
+  handleSpeedCommand(command);
+  Wire.read();
 }
 
 void setup() {
@@ -61,6 +76,7 @@ void setup() {
   // Start I2C Slave Connection, for data transmit interrupt
   Wire.begin(SLAVE_ADDRESS); // this will begin I2C Connection with 0x40 address
   Wire.onRequest(sendDataISR); // sendData is funtion called when Pi requests data
+  Wire.onReceive(handleCommandISR); // sendData is funtion called when Pi requests data
 
   setupEsc();
   setupIR();
@@ -78,7 +94,6 @@ void loop() {
   checkESDwrite();
   checkTachRead();
   checkTachPrint();
-  checkDataInterrupt();
 }
 
 void checkESDwrite() {
@@ -92,15 +107,19 @@ void checkESDwrite() {
 void checkSpeedCommand() {
   if (Serial.available() > 0) {
     long input = Serial.parseInt();
-    if ((input >= 1300) && (input <= 4000)) {
-      escSpeed = (uint8_t)map(input, 1340, 4786, 15, 100);
-      bufferedOut.print("Setting Speed to: ");
-      bufferedOut.println(escSpeed);
-    }
-    else if (input == -1) {
-      escSpeed = 0;
-      bufferedOut.print("Stopping Motors...");
-    }
+    handleSpeedCommand(input);
+  }
+}
+
+void handleSpeedCommand(long input) {
+  if ((input >= 1300) && (input <= 4000)) {
+    escSpeed = (uint8_t)map(input, 1340, 4786, 15, 100);
+    bufferedOut.print("Setting Speed to: ");
+    bufferedOut.println(escSpeed);
+  }
+  else if (input == -1) {
+    escSpeed = 0;
+    bufferedOut.print("Stopping Motors...");
   }
 }
 
@@ -122,22 +141,13 @@ void checkTachPrint() {
     tachPrintDelay.repeat();
     // Serial.print("uS per Blade:");
     // Serial.println(bladeMicros);
+    noInterrupts();
     instantRPM = (MICROS_PER_MIN / (bladeMicros * NUM_BLADES));
+    interrupts();
     if (instantRPM > 5000) {
       return;
     }
     bufferedOut.print("Current RPM: ");
     bufferedOut.println(instantRPM);
-  }
-}
-
-void checkDataInterrupt() {
-  if (dataInterruptReady) {
-    dataInterruptReady = false;
-    char rpmStr[8];
-    dtostrf(instantRPM, 3, 2, rpmStr);
-    bufferedOut.print("Data Request Interrupt Received: ");
-    bufferedOut.println(rpmStr);
-    Wire.write(rpmStr); // return data to PI
   }
 }
