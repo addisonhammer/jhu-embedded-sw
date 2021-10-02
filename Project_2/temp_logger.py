@@ -10,7 +10,7 @@ def main():
     i2c_csv.log_i2c_to_csv(
         read_interval_s=datetime.timedelta(seconds=10),
         read_duration_s=datetime.timedelta(minutes=10),
-        csv_file="temp_data.csv" + date_suffix,
+        csv_file="temp_data" + date_suffix + ".csv",
         data_header="temperature_f",
         data_type=float
     )
