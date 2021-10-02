@@ -1,5 +1,5 @@
 {
-    "sketch": "Project_2/temp_reader/temp_reader.ino",
+    "sketch": "Project_3/tachometer/tachometer.ino",
     "board": "arduino:avr:uno",
     "port": "/dev/ttyUSB0",
     "output": "./build",

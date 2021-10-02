@@ -23,7 +23,7 @@ def log_i2c_to_csv(read_interval_s: datetime.timedelta,
                 try:
                     result = BUS.read_i2c_block_data(i2c_addr, i2c_offset, i2c_len)
                     msg = bytes(b for b in result if b != 255).decode('utf-8')
-                    logging.info(f'Logging temperature reading: {msg}')
+                    logging.info(f'Logging data_header reading: {msg}')
                     timestamp = datetime.datetime.utcnow()
                     csv_writer.writerow({'timestamp': timestamp.isoformat(), data_header: data_type(msg)})
                     time.sleep(read_interval_s.total_seconds())
