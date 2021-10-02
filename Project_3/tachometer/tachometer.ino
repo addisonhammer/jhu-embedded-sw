@@ -92,7 +92,7 @@ void checkESDwrite() {
 void checkSpeedCommand() {
   if (Serial.available() > 0) {
     long input = Serial.parseInt();
-    if ((input >= 1300) and (input <= 4000)) {
+    if ((input >= 1300) && (input <= 4000)) {
       escSpeed = (uint8_t)map(input, 1340, 4786, 15, 100);
       bufferedOut.print("Setting Speed to: ");
       bufferedOut.println(escSpeed);
@@ -134,8 +134,10 @@ void checkTachPrint() {
 void checkDataInterrupt() {
   if (dataInterruptReady) {
     dataInterruptReady = false;
+    char rpmStr[8];
+    dtostrf(instantRPM, 3, 2, rpmStr);
     bufferedOut.print("Data Request Interrupt Received: ");
-    bufferedOut.println(instantRPM);
-    Wire.write(instantRPM); // return data to PI
+    bufferedOut.println(rpmStr);
+    Wire.write(rpmStr); // return data to PI
   }
 }
