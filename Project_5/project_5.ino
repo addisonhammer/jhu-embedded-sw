@@ -40,9 +40,6 @@ millisDelay thingSpeakDelay;
 millisDelay thingSpeakInidicatorDelay;
 bool tspeakIsUpdating = false;
 
-const int NUM_FIELDS = 2;
-int currentFieldNum = 1;
-
 float temperature = 0.0;
 float humidity = 0.0;
 
@@ -65,7 +62,7 @@ void writeTSpeakField(float field1Val, float field2Val) {
   Serial.print("Success! New Record ID: ");
   Serial.println(payload); // Print the response payload
   }
-http.end();  // Close connection
+  http.end();  // Close connection
 }
 
 void setup()
