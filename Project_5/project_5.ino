@@ -103,6 +103,7 @@ void setup()
 
 void loop() {
   if (DHTreadDelay.justFinished()) {
+    DHTreadDelay.repeat();
     update_temp();
   }
   if (OLEDframeDelay.justFinished()) {
