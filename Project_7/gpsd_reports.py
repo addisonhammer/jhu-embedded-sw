@@ -1,9 +1,9 @@
+from enum import Enum
+
 class GPSDReport:
     @staticmethod
     def getReport(jsonReport):
-        reportType = jsonReport.get('class', None)
-        if reportType is None:
-            return None
+        reportType = jsonReport.get('class')
         if reportType == 'TPV':# Time Position Velocity Reports
             return TPVReport(jsonReport)
         elif reportType == 'VERSION':# Report about the gpsd version
@@ -18,21 +18,33 @@ class GPSDReport:
             return WatchReport(jsonReport)
         elif reportType == 'ERROR':# Error Reports
             return ErrorReport(jsonReport)
+        else:
+            return None
 
 
-class TPVReport(GPSDReport):    
+class TPVReport(GPSDReport):
+    class ModeEnum(Enum):
+        NO_MODE = 0
+        NO_FIX = 1
+        DIM_2 = 2
+        DIM_3 = 3
+
     def __init__(self, jsonReport):
-        self.time = jsonReport.get('time', None)  
-        self.timeErrSec = jsonReport.get('ept', None)  # time error in seconds
-        self.lonDeg = jsonReport.get('lat', None)  # latitude, degrees
-        self.latDeg = jsonReport.get('lon', None)  # longitude, degrees
-        self.altMeters = jsonReport.get('alt', None)  # altitude, meters
-        self.lonErrMeters = jsonReport.get('epx', None)  # longitude error, meters
-        self.latErrMeters = jsonReport.get('epy', None)  # latitude error, meters
-        self.altErrMeters = jsonReport.get('epv', None)  # altitude error, meters
-        self.headingDeg = jsonReport.get('track', None)  # degrees from true north
-        self.speedMPS = jsonReport.get('speed', None)  # speed in meters per second
-        self.climbMPS = jsonReport.get('climb', None)  # climb/sink rate in meters per second
+        self.mode = jsonReport.get('mode')
+        self.time = jsonReport.get('time')
+        self.timeErrSec = jsonReport.get('ept')# time error in seconds
+        self.lonDeg = jsonReport.get('lat')# latitude, degrees
+        self.latDeg = jsonReport.get('lon')# longitude, degrees
+        self.altMeters = jsonReport.get('alt')# altitude, meters
+        self.lonErrMeters = jsonReport.get('epx')# longitude error, meters
+        self.latErrMeters = jsonReport.get('epy')# latitude error, meters
+        self.altErrMeters = jsonReport.get('epv')# altitude error, meters
+        self.headingDeg = jsonReport.get('track')# degrees from true north
+        self.speedMPS = jsonReport.get('speed')# speed in meters per second
+        self.climbMPS = jsonReport.get('climb')# climb/sink rate in meters per second
+        self.headingErrDeg = jsonReport.get('epd')# heading error in degrees
+        self.speedErrMPS = jsonReport.get('eps')# speed error in meters per second
+        self.climbErrMPS = jsonReport.get('epc')# climb/sink error in meters per second
     
 class VersionReport(GPSDReport):
     def __init__(self, jsonReport):
