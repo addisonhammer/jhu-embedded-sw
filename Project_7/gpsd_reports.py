@@ -30,7 +30,7 @@ class TPVReport(GPSDReport):
         DIM_3 = 3
 
     def __init__(self, jsonReport):
-        self.mode = jsonReport.get('mode')
+        self.mode = self.ModeEnum(jsonReport.get('mode'))
         self.time = jsonReport.get('time')
         self.timeErrSec = jsonReport.get('ept')# time error in seconds
         self.lonDeg = jsonReport.get('lat')# latitude, degrees

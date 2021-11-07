@@ -54,7 +54,7 @@ def handleReport(line):
 
     if isinstance(report, TPVReport):
         # only print reports if we have a fix
-        if report.mode >= TPVReport.ModeEnum.DIM_2.value:
+        if report.mode in (TPVReport.ModeEnum.DIM_2, TPVReport.ModeEnum.DIM_3):
             print(f'Time: {report.time}, '
             f'Lat: {report.latDeg}, '
             f'Lon: {report.lonDeg}, '
@@ -78,6 +78,7 @@ def watch_socket(sock: socket.socket):
             messages[0] = partial_message + messages[0]
             partial_message = messages.pop()  # This should be blank, save for next loop
             for message in messages:
+                print(message)
                 handleReport(message)
         except BlockingIOError:
             time.sleep(0.1)
