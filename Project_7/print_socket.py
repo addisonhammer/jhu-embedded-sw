@@ -24,9 +24,9 @@ def connectToHost(ip: str = SERVER_IP, port: int = SERVER_PORT) -> Optional[sock
         # attempt to connect to server
         server_address = (ip, port)
         sock.connect(server_address)
-        print('Connected to: %s:%s' % server_address)
+        print(f'Connected to: {ip}:{port}')
     except:
-        print("Failed to connect to: %s:%s" % server_address)
+        print(f'Failed to connect to: {ip}:{port}')
         return None
 
     # allow program to do other things while waiting for data
@@ -49,15 +49,19 @@ def handleReport(line):
     try:
         report = GPSDReport.getReport(json.loads(line))
     except JSONDecodeError:
-        print("JSON Decode ERR:" + line)
+        print(f'JSON Decode ERR: {line}')
         return
 
     if isinstance(report, TPVReport):
         # only print reports if we have a fix
         if report.mode >= TPVReport.ModeEnum.DIM_2.value:
-            print('Time: %s, Lat: %s, Lon: %s, Alt: %s, Heading: %s, Speed: %s, Climb: %s'
-                  % (report.time, report.latDeg, report.lonDeg, report.altMeters,
-                     report.headingDeg, report.speedMPS, report.climbMPS))
+            print(f'Time: {report.time}, '
+            f'Lat: {report.latDeg}, '
+            f'Lon: {report.lonDeg}, '
+            f'Alt: {report.altMeters}, '
+            f'Heading: {report.headingDeg}, '
+            f'Speed: {report.speedMPS}, '
+            f'Climb: {report.climbMPS}')
     elif report == None:
         print('Unknown Report Type!')
         print(f'Raw data: {line}')
