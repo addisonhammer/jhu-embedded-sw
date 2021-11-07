@@ -9,7 +9,7 @@ import signal
 import sys
 
 SERVER_IP = '10.3.141.1'  # IP of server
-SERVER_PORT = 2947  # for gpsd
+SERVER_PORT = '2947'  # for gpsd
 
 # per gpsd docs, max size of a response
 GPSD_RESP_MAX_SIZE = 10240
@@ -17,12 +17,12 @@ GPSD_RESP_MAX_SIZE = 10240
 WATCH_DEV_STR = '?WATCH={"enable":true,"json":true}'
 
 
-def connectToHost(ip: str = SERVER_IP, port: int = SERVER_PORT) -> Optional[socket.socket]:
+def connectToHost(ip: str = SERVER_IP, port: str = SERVER_PORT) -> Optional[socket.socket]:
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         # attempt to connect to server
-        server_address = (ip, port)
+        server_address = (ip, int(port))
         sock.connect(server_address)
         print(f'Connected to: {ip}:{port}')
     except:
@@ -78,7 +78,6 @@ def watch_socket(sock: socket.socket):
             messages[0] = partial_message + messages[0]
             partial_message = messages.pop()  # This should be blank, save for next loop
             for message in messages:
-                print(message)
                 handleReport(message)
         except BlockingIOError:
             time.sleep(0.1)
@@ -89,9 +88,13 @@ def watch_socket(sock: socket.socket):
             print(e)
 
 
-def main():
+def main(*args):
+    if len(args) not in (0, 2):
+        print('usage: print_socket.py [<ip> <port>]')
+        print(f'recieved: {args}')
+        return
     # Connect the socket to the port where the server is listening
-    sock = connectToHost()
+    sock = connectToHost(*args)
     if not sock:
         return
     setup_sentinel(sock)
@@ -99,5 +102,5 @@ def main():
     watch_socket(sock)
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+   main(*sys.argv[1:])
