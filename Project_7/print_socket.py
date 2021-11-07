@@ -7,6 +7,7 @@ from typing import Optional
 from gpsd_reports import GPSDReport, TPVReport
 import signal
 import sys
+import mapping
 
 SERVER_IP = '10.3.141.1'  # IP of server
 SERVER_PORT = '2947'  # for gpsd
@@ -62,6 +63,7 @@ def handleReport(line):
             f'Heading: {report.headingDeg}, '
             f'Speed: {report.speedMPS}, '
             f'Climb: {report.climbMPS}')
+            mapping.plot_point(report.latDeg, report.lonDeg, report.altMeters)
     elif report == None:
         print('Unknown Report Type!')
         print(f'Raw data: {line}')
