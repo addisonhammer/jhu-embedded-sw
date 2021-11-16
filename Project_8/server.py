@@ -1,3 +1,5 @@
+from gevent import monkey
+monkey.patch_all()
 from time import sleep
 from flask import Flask, render_template, Response, render_template_string, session, copy_current_request_context
 import imu
@@ -6,10 +8,11 @@ from concurrent.futures import ThreadPoolExecutor, Future
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 
-async_mode = None
+
+
 arduino = None
 app = Flask(__name__)
-socket_ = SocketIO(app, async_mode=async_mode)
+socket_ = SocketIO(app)
 
 @app.route("/gps")
 def get_gps():
