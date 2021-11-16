@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Socket-Test</title>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+
+            namespace = '/test';
+            var socket = io(namespace);
+
+            socket.on('response', function(msg, cb) {
+                $('#log').html(msg.data);
+                if (cb)
+                    cb();
+            });
+            $('form#emit').submit(function(event) {
+                socket.emit('imu_request');
+                return false;
+            });
+            $('form#disconnect').submit(function(event) {
+                socket.emit('disconnect_request');
+                return false;
+            });
+        });
+    </script>
+</head>
+<body style="background-color:white;">
+
+    <h1 style="background-color:white;">Quadracopter Data Dashboard</h1>
+    <p>Welcome to the Quadcopter!</p>
+    <p>Addison Hammer / Graeme Knowles</p>
+    <p>EN.605.715.82.FA21</p>
+    <p>Project Submission 8 - Streaming Live IMU Data</p>
+    <h2 style="background-color:white;">IMU Data</h2>
+    <form id="emit" method="POST" action='#'>
+        <input type="submit" value="Start IMU Stream">
+    </form>
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Stop Stream">
+    </form>
+    <div id="log" ></div>
+</body>
+</html>
