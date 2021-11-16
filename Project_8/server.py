@@ -1,11 +1,13 @@
 from time import sleep
 from flask import Flask, render_template, Response, render_template_string, session, copy_current_request_context
 import imu
+import sys
 from concurrent.futures import ThreadPoolExecutor, Future
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 
 async_mode = None
+arduino = None
 app = Flask(__name__)
 socket_ = SocketIO(app, async_mode=async_mode)
 
@@ -15,7 +17,8 @@ def get_gps():
 
 @app.route("/imu")
 def get_imu():
-    return imu.ARDUINO.read_data().to_json()
+    global arduino
+    return arduino.read_data().to_json()
 
 @app.route("/video")
 def get_video():
@@ -45,4 +48,9 @@ def disconnect_request():
          callback=can_disconnect)
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        port = 'COM4'
+    else:
+        port = sys.argv[1]
+    arduino = imu.Arduino(port=port, baudrate=115200, timeout=0.1)
     socket_.run(app, host="0.0.0.0", port=5000, debug=True)

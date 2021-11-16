@@ -37,7 +37,7 @@ class Arduino:
         raise SerialException("Error Retrieving IMU Data!")
 
 
-ARDUINO = Arduino(port='COM4', baudrate=115200, timeout=.2)
 
 if __name__ == "__main__":
-    print(ARDUINO.read_data().to_json())
+    a = Arduino(port='COM4', baudrate=115200, timeout=.2)
+    print(a.read_data().to_json())
