@@ -1,5 +1,5 @@
 {
-    "sketch": "Project_3/tachometer/tachometer.ino",
+    "sketch": "Project_8\\rtos\\rtos.ino",
     "board": "arduino:avr:uno",
     "port": "/dev/ttyUSB0",
     "output": "./build",
