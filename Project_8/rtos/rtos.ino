@@ -10,10 +10,9 @@
 
 // Configuration
 const int IMU_SENSOR_ID = 55;
-const int IMU_READ_INTERVAL_MS = 200;
 const unsigned long SERIAL_BAUD = 115200;
 const UBaseType_t MEASUREMENT_QUEUE_SIZE = 3;
-const int SERIAL_WRITE_BUFFER_SIZE = 255;
+const UBaseType_t COMMAND_QUEUE_SIZE = 3;
 
 // BNO055 Absolute Orientation Sensor
 Adafruit_BNO055 bno = Adafruit_BNO055(IMU_SENSOR_ID, 0x28);
@@ -24,15 +23,6 @@ void TaskIMU( void *pvParameters );
 void TaskSerialWrite( void *pvParameters );
 // Tasks shall not return or exit, so loop infinitely
 void ErrorLoop();
-// function to handle accurate waiting and millis() overflow
-inline unsigned long CalculateWaitTargetWaitForOverflow(
-  const unsigned long readInterval, 
-  unsigned long & lastWaitTarget, 
-  unsigned long & loopCount, 
-  unsigned long & rolloverOffset);
-
-// buffer to hold the printed string
-char stringbuf[SERIAL_WRITE_BUFFER_SIZE];
 
 // Holds a raw measurement from the IMU.
 sensors_event_t data;
@@ -46,11 +36,22 @@ struct Measurement
  
 // IMU data
 QueueHandle_t dataQ;
+// Commands
+QueueHandle_t commandQ;
+
+// Commands the program will respond to
+enum CommandsEnum
+{
+  ORIENTATION = '!'
+};
+int NUM_COMMANDS = 1;
+char COMMANDS[] = {ORIENTATION};
 
 // the setup function runs once when you press reset or power the board
 void setup() {
   // Note NOT statically allocated.
   dataQ = xQueueCreate(MEASUREMENT_QUEUE_SIZE, sizeof(Measurement));
+  commandQ = xQueueCreate(COMMAND_QUEUE_SIZE, sizeof(char));
 
   Serial.begin(SERIAL_BAUD);
 
@@ -102,29 +103,24 @@ void TaskIMU(void *pvParameters)  // This is a task.
   // calculate the correct time to wait to
   unsigned long rolloverOffset = 0;
 
+  char command;
+
   while(true)
   {
-    // Get imu reading
-    bno.getEvent(&data, Adafruit_BNO055::VECTOR_EULER);
-    meas.data[0] = data.orientation.roll;
-    meas.data[1] = data.orientation.pitch;
-    meas.data[2] = data.orientation.heading;
-  
-    // put item on queue, do not block if full
-    xQueueSend(dataQ, &meas, 0);
-
-    // Calculate the next time to wait until
-    unsigned long waitTarget = CalculateWaitTargetWaitForOverflow(
-      IMU_READ_INTERVAL_MS, // Duration of each tick
-      lastWaitTarget, // Last time we waited to
-      measurementCount, // Number of previous waits
-      rolloverOffset);// Offset introduced by rollovers
-    // wait until time to take the next measurement. Can't use the
-    // standard Free RTOS wait here because the lowest time setable
-    // in the arduino version is 15ms and the max IMU frequency is 100Hz.
-    while(millis() < waitTarget);
-    lastWaitTarget = waitTarget;
-    ++measurementCount;
+    if(xQueueReceive(commandQ, &command, portMAX_DELAY) == pdTRUE)
+    {
+      if(command == ORIENTATION)
+      {
+        // Get imu reading
+        bno.getEvent(&data, Adafruit_BNO055::VECTOR_EULER);
+        meas.data[0] = data.orientation.roll;
+        meas.data[1] = data.orientation.pitch;
+        meas.data[2] = data.orientation.heading;
+      
+        // put item on queue, do not block if full
+        xQueueSend(dataQ, &meas, 0);
+      }
+    }
   }
 }
 
@@ -134,16 +130,35 @@ void TaskSerialWrite(void *pvParameters)  // This is a task.
   (void) pvParameters;
   // local measurement to hold the data from the queue
   Measurement meas;
-
+  
+  static const int READ_ERR_VAL = -1;
   while(true)
   {
+    int incoming = READ_ERR_VAL;
+    while((incoming = Serial.read()) == READ_ERR_VAL);
+    // Ignore non orientation commands
+    bool validCommand = false;
+    for(int i = 0; i < NUM_COMMANDS; ++i)
+    {
+      if((char)incoming == COMMANDS[i]) 
+      { 
+        validCommand = true;
+        break;
+      }
+    }
+
+    if(!validCommand) continue;
+
+    // put item on queue, do not block if full
+    xQueueSend(commandQ, &incoming, 0);
+    
     // Get the latest measurements from the queue, block until not-empty
     if(xQueueReceive(dataQ, &meas, portMAX_DELAY) == pdTRUE)
     {
       for(int i = 0; i < NUM_MEASUREMENTS; ++i)
       {
         Serial.print(meas.data[i]);
-        Serial.print(",");
+        if(i < NUM_MEASUREMENTS - 1) Serial.print(",");
       }
       Serial.print("\n");
     }
@@ -159,31 +174,4 @@ void ErrorLoop()
   { // wait for one second
       vTaskDelay( 1000 / portTICK_PERIOD_MS );
   }
-}
-
-// Calculate a time to wait to based on the input period. 
-// Waiting via measuring the time taken, or a constant wait induces delays
-// on each iteration that add up over time. Calculating targets to wait to
-// via a counter and a period removes this drift, but overflow of the counters
-// must be handled.
-// Note that if an overflow is going to occur, this function will wait until it does.
-inline unsigned long CalculateWaitTargetWaitForOverflow(
-  const unsigned long readInterval, 
-  unsigned long & lastWaitTarget, 
-  unsigned long & loopCount, 
-  unsigned long & rolloverOffset)
-{
-    unsigned long waitTarget = loopCount * readInterval + rolloverOffset;
-    // rollover will occur at ~50 days of uptime
-    if(waitTarget < lastWaitTarget)
-    {
-      lastWaitTarget = 0;
-      // if the imu read interval is not a perfect divisor, some millis will be lost
-      rolloverOffset = ULONG_MAX % readInterval;
-      // calculate the wait target after the rollover
-      waitTarget = loopCount * readInterval - rolloverOffset;
-      // wait until the rollover
-      while(millis() > 0);
-    }
-    return waitTarget;
 }
