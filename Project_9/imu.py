@@ -43,7 +43,6 @@ class Arduino:
         return self.read_data().to_json().encode('utf-8')
 
 
-
 def try_connect():
     try:
         return serial.Serial(port='/dev/rfcomm0', baudrate=115200, timeout=0.2)
@@ -57,8 +56,9 @@ def try_connect():
 
 if __name__ == "__main__":
     a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
+    client = None
     while True:
-        if not client:
+        if client is None:
             client = try_connect()
         try:
             client.write(a.read_json_bytes())
