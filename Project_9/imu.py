@@ -42,4 +42,9 @@ if __name__ == "__main__":
     a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
     client = serial.Serial(port='/dev/rfcomm0', baudrate=115200, timeout=0.2)
     while True:
-        client.write(a.read_data().to_json().encode('utf-8'))
+        try:
+            client.write(a.read_data().to_json().encode('utf-8'))
+        except Exception as e:
+            print(e)
+            time.sleep(1)
+            continue
