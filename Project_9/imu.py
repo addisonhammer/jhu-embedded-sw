@@ -14,7 +14,7 @@ class ImuData:
     roll: float
     pitch: float
 
-    def to_json(self) -> bytes:
+    def to_json(self) -> str:
         return json.dumps(self.__dict__)
 
 class Arduino:
@@ -42,4 +42,4 @@ if __name__ == "__main__":
     a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
     client = serial.Serial(port='/dev/rfcomm0', baudrate=115200, timeout=0.2)
     while True:
-        client.write(a.read_data().to_json())
+        client.write(a.read_data().to_json().encode('utf-8'))
