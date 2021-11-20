@@ -48,7 +48,7 @@ def get_video():
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        port = 'COM4'
+        port = '/dev/arduino_0'
     else:
         port = sys.argv[1]
     arduino = imu.Arduino(port=port, baudrate=115200, timeout=0.1)

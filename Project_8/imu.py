@@ -39,6 +39,6 @@ class Arduino:
 
 
 if __name__ == "__main__":
-    a = Arduino(port='COM4', baudrate=115200, timeout=.2)
+    a = Arduino(port='/dev/arduino_0', baudrate=115200, timeout=.2)
     while True:
         print(a.read_data().to_json())
