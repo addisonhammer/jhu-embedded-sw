@@ -55,7 +55,7 @@ def try_connect():
 
 
 if __name__ == "__main__":
-    a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
+    a = Arduino(port='/dev/arduino_0', baudrate=115200, timeout=0.2)
     client = None
     while True:
         if client is None:
