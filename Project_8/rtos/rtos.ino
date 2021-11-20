@@ -54,6 +54,7 @@ void setup() {
   commandQ = xQueueCreate(COMMAND_QUEUE_SIZE, sizeof(char));
 
   Serial.begin(SERIAL_BAUD);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -135,7 +136,21 @@ void TaskSerialWrite(void *pvParameters)  // This is a task.
   while(true)
   {
     int incoming = READ_ERR_VAL;
-    while((incoming = Serial.read()) == READ_ERR_VAL);
+
+    // blink the onboard LED to signify waiting for commands
+    unsigned long last_blink = 0;
+    int LED_VALUE = LOW;
+    while((incoming = Serial.read()) == READ_ERR_VAL)
+    {
+      unsigned long tme = millis();
+      if(last_blink + 200 <= tme)
+      {
+        last_blink = tme;
+        digitalWrite(LED_BUILTIN, (LED_VALUE = (LED_VALUE == LOW ? HIGH : LOW)));
+      }
+    }
+    digitalWrite(LED_BUILTIN, HIGH);
+    
     // Ignore non orientation commands
     bool validCommand = false;
     for(int i = 0; i < NUM_COMMANDS; ++i)
@@ -162,6 +177,7 @@ void TaskSerialWrite(void *pvParameters)  // This is a task.
       }
       Serial.print("\n");
     }
+    
   }
 }
 
@@ -170,6 +186,9 @@ void TaskSerialWrite(void *pvParameters)  // This is a task.
 void ErrorLoop()
 {
   Serial.println("TASK ERROR");
+
+  digitalWrite(LED_BUILTIN, HIGH);
+  
   while(true) 
   { // wait for one second
       vTaskDelay( 1000 / portTICK_PERIOD_MS );
