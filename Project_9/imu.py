@@ -40,6 +40,7 @@ class Arduino:
 
 if __name__ == "__main__":
     a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
+    client = None
     while True:
         if not client:
             try:
