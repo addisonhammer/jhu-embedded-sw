@@ -14,7 +14,6 @@ arduino = None
 def update_load():
     with app.app_context():
         while True:
-            time.sleep(0.5)
             turbo.push(turbo.replace(render_template('imu.html.jinja'), 'imu'))
 
 @app.route('/')

@@ -10,9 +10,9 @@ _DELIM = b','
 
 @dataclasses.dataclass(frozen=True, order=True)
 class ImuData:
+    yaw: float
     roll: float
     pitch: float
-    yaw: float
 
     def to_json(self) -> bytes:
         return json.dumps(self.__dict__)
@@ -30,7 +30,7 @@ class Arduino:
         self.serial.write(_REQ)
         time.sleep(0.05)
         data = self.serial.readline().split(_DELIM)
-        print(f'Data Recieved!: {data}')
+        # print(f'Data Recieved!: {data}')
         if len(data) == 3:
             args = tuple(float(val) for val in data)
             return ImuData(*args)
@@ -40,4 +40,5 @@ class Arduino:
 
 if __name__ == "__main__":
     a = Arduino(port='COM4', baudrate=115200, timeout=.2)
-    print(a.read_data().to_json())
+    while True:
+        print(a.read_data().to_json())
