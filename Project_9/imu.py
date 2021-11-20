@@ -42,9 +42,10 @@ if __name__ == "__main__":
     a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=0.2)
     client = None
     while True:
-        if not client:
+        if client is None:
             try:
                 client = serial.Serial(port='/dev/rfcomm0', baudrate=115200, timeout=0.2)
+                print('Connected! Streaming data...')
             except serial.serialutil.SerialException as e:
                 print('Bluetooth client not connected:')
                 print(e)
