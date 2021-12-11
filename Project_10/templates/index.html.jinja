@@ -1,0 +1,47 @@
+<!-- index.html.jinja -->
+<!doctype html>
+<html>
+  <head>
+    {{ turbo() }}
+    <title>JHU Embedded Software Project 10</title>
+    <style>
+      .imu {
+        float: left;
+        width: 500;
+        border: 1px solid black;
+        margin-left: 10px;
+        margin-bottom: 10px;
+        padding: 10px;
+      }
+      .imu th, .imu td {
+        padding: 6px;
+        text-align: center;
+      }
+      .gps {
+        float: left;
+        width: 500;
+        border: 1px solid black;
+        margin-left: 10px;
+        margin-bottom: 10px;
+        padding: 10px;
+      }
+      .gps th, .gps td {
+        padding: 6px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+   <h1 style="background-color:white;">Quadracopter Data Dashboard</h1>
+    <p>Welcome to the Quadcopter!</p>
+    <p>Addison Hammer / Graeme Knowles</p>
+    <p>EN.605.715.82.FA21</p>
+    <p>Project Submission 10 - Streaming Live Dashboard</p>
+    <h2>Log Data:</h2>
+    {% include "imu.html.jinja" %}
+    <br><br><br><br><br><br>
+    {% include "gps.html.jinja" %}
+    <br><br><br><br><br><br>
+    <img style="-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%, 25%);" src="http://192.168.50.98:8081/" width="640" height="480">
+  </body>
+</html>
