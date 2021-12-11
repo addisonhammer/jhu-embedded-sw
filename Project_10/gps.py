@@ -8,7 +8,7 @@ def main(*args):
     for new_data in gps_socket:
         if new_data:
             data_stream.unpack(new_data)
-            print(data_stream.TPV)
+            # print(data_stream.TPV)
 
 
 if __name__ == "__main__":

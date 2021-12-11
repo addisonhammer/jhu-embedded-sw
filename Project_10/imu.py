@@ -1,47 +1,53 @@
-import json
-import dataclasses
-import serial
 import time
+import datetime
+from typing import Type
+import smbus
+import csv
+import logging
 
-from serial.serialutil import SerialException
+BUS = smbus.SMBus(1)
+i2c_addr: bytes = 0x04
+i2c_offset: bytes = 0x00
+i2c_len: int = 32
+KEYS = ('yaw', 'pitch', 'roll')
 
-_REQ = b'!'
-_DELIM = b','
+def log_i2c_to_csv(read_interval_s: datetime.timedelta,
+                    read_duration_s: datetime.timedelta,
+                    csv_file: str,  
+                    data_header: str,
+                    data_type: Type,
+                    i2c_addr: bytes = 0x40,
+                    i2c_offset: bytes = 0x00,
+                    i2c_len: int = 32):
+    logging.info('Starting logger...')
+    with open(csv_file, 'w') as f:
+            csv_writer = csv.DictWriter(f, ('timestamp', data_header))
+            start_time = datetime.datetime.utcnow()
+            while (datetime.datetime.utcnow() - start_time) < read_duration_s:
+                try:
+                    result = BUS.read_i2c_block_data(i2c_addr, i2c_offset, i2c_len)
+                    msg = bytes(b for b in result if b != 255).decode('utf-8')
+                    logging.info(f'Logging data_header reading: {msg}')
+                    timestamp = datetime.datetime.utcnow()
+                    csv_writer.writerow({'timestamp': timestamp.isoformat(), data_header: data_type(msg)})
+                    time.sleep(read_interval_s.total_seconds())
+                except OSError as e:
+                    logging.error('IO Error on I2C Bus: %s', e)
+                    continue
+                except KeyboardInterrupt:
+                    # This won't handle CTRL+C during IOErrors...
+                    logging.error('Data collection interrupted.')
+                    break
 
-@dataclasses.dataclass(frozen=True, order=True)
-class ImuData:
-    yaw: float
-    roll: float
-    pitch: float
+def read_data() -> dict:
+    try:
+        result = BUS.read_i2c_block_data(i2c_addr, i2c_offset, i2c_len)
+        msg = bytes(b for b in result if b != 255).decode('utf-8')
+        values = {key: float(val) for key, val in zip(KEYS, msg.split(','))}
+        return values
+    except Exception as e:
+        print(f'read_data error: {e}')
 
-    def to_json(self) -> bytes:
-        return json.dumps(self.__dict__)
-
-class Arduino:
-    def __init__(self, port, baudrate, timeout):
-        self.port = port
-        self.baud = baudrate
-        self.timeout = timeout
-        self.serial = None
-
-    def read_data(self) -> ImuData:
-        if not self.serial:
-          self.serial = serial.Serial(port=self.port, baudrate=self.baud, timeout=self.timeout)
-        self.serial.write(_REQ)
-        time.sleep(0.05)
-        data = self.serial.readline().split(_DELIM)
-        # print(f'Data Recieved!: {data}')
-        if len(data) == 3:
-            args = tuple(float(val) for val in data)
-            return ImuData(*args)
-        raise SerialException("Error Retrieving IMU Data!")
-
-
-
-if __name__ == "__main__":
-    a = Arduino(port='/dev/ttyUSB0', baudrate=115200, timeout=.2)
-    while True:
-        try:
-            print(a.read_data().to_json())
-        except Exception as e:
-            print(e)
+if __name__ == '__main__':
+    values = read_data()
+    print(f'Logging data_header reading: {values}')
