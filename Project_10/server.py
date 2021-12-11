@@ -21,11 +21,22 @@ def before_first_request():
 def update_gps():
     global gps_socket
     global gps_data
-    for new_data in gps_socket:
-        if new_data:
-            gps_data = gps3.DataStream()
-            gps_data.unpack(new_data)
-            print(gps_data.TPV)
+    while True:
+        try:
+            if not gps_socket:
+                gps_socket = gps3.GPSDSocket()
+                gps_socket.connect()
+                gps_socket.watch()
+            for new_data in gps_socket:
+                if new_data:
+                    gps_data = gps3.DataStream()
+                    gps_data.unpack(new_data)
+                    print(gps_data.TPV)
+        except Exception as e:
+            print(e)
+        finally:
+            gps_socket.close()
+            gps_socket = None
 
 
 def update_load():
